@@ -1,30 +1,40 @@
 import { Injectable } from '@angular/core';
-import { Http, Response } from '@angular/http';
-import { RecipeService } from '../recipes/recipe.service';
+import { HttpClient, HttpHeaders, HttpParams, HttpRequest } from '@angular/common/http';
 import 'rxjs/add/operator/map';
+
+import { RecipeService } from '../recipes/recipe.service';
 import { Recipe } from '../recipes/recipe.model';
-import * as firebase from 'firebase';
 import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class DataStorageService {
-  constructor(private http: Http,
+  constructor(private httpClient: HttpClient,
               private recipeService: RecipeService,
               private authService: AuthService) {}
 
   storageRecipes() {
-    const token = this.authService.getToken();
+    // const headers = new HttpHeaders().set('Authorization', 'Bearer asdfasdgasgasd');
 
-    return this.http.put('https://ng-recipe-book-d00e0.firebaseio.com/recipes.json?auth=' + token, this.recipeService.getRecipes());
+    // return this.httpClient.put('https://ng-recipe-book-d00e0.firebaseio.com/recipes.json', this.recipeService.getRecipes(), {
+    //   observe: 'body',
+    //   params: new HttpParams().set('auth', token)
+    //   // headers: headers
+    // });
+    const req = new HttpRequest('PUT', 'https://ng-recipe-book-d00e0.firebaseio.com/recipes.json', this.recipeService.getRecipes(), {reportProgress: true});
+    return this.httpClient.request(req);
   }
 
   getRecipes() {
     const token = this.authService.getToken();
 
-    return this.http.get('https://ng-recipe-book-d00e0.firebaseio.com/recipes.json?auth=' + token)
+    // return this.httpClient.get<Recipe[]>('https://ng-recipe-book-d00e0.firebaseio.com/recipes.json?auth=' + token)
+    return this.httpClient.get<Recipe[]>('https://ng-recipe-book-d00e0.firebaseio.com/recipes.json', {
+      observe: 'body',
+      responseType: 'json',
+    })
       .map(
-        (response: Response) => {
-          const recipes: Recipe[] = response.json();
+        (recipes) => {
+          console.log('recipes', recipes);
           for (let recipe of recipes) {
             if (!recipe['ingredients']) {
               recipe['ingredients'] = [];
